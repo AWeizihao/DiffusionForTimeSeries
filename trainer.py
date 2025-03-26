@@ -9,7 +9,7 @@ from model import DiffusionTimeSeriesModelRiskMultiScale
 
 import All_methods.assess as aser  # 假设已有的评估模块
 
-def train_model(config,input):
+def train_model(config,input,target_fields=None):
     """
     根据配置训练模型，配置中可控制：
       - 数据加载的相关参数（start_date, end_date, cond_len, seq_len, target_fields）
@@ -17,7 +17,7 @@ def train_model(config,input):
       - 训练过程参数（lr, n_epochs, weight_decay 等）
       - 采样时 DDIM 参数（ddim_steps, eta）
     """
-    train_c, train_y, test_c, test_y, data_mean, data_std = load_train_test_data(input,config["cond_len"], config["seq_len"],config["target_fields"])
+    train_c, train_y, test_c, test_y, data_mean, data_std = load_train_test_data(input,config["cond_len"], config["seq_len"],target_fields)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_c, train_y = train_c.to(device), train_y.to(device)
     test_c, test_y = test_c.to(device), test_y.to(device)
