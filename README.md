@@ -169,27 +169,27 @@ model = train_model(config,data)
 
 1. **前向过程：**
 
-    将真实数据 $\{\mathbf{x_0}\}$ 逐步加噪得到 $\{\mathbf{x_1}, \mathbf{x_2}, \dots, \mathbf{x_T}\}$：
+    将真实数据 $\{\mathbf{x _0}\}$ 逐步加噪得到 $\{\mathbf{x _1}, \mathbf{x _2}, \dots, \mathbf{x _T}\}$：
 
     $$
-    \mathbf{x_t} = \sqrt{\bar{\alpha}_t}\, \mathbf{x_0} + \sqrt{1 - \bar{\alpha}_t}\,\epsilon,
+    \mathbf{x _t} = \sqrt{\bar{\alpha} _t}\, \mathbf{x _0} + \sqrt{1 - \bar{\alpha} _t}\,\epsilon,
     \quad \epsilon \sim \mathcal{N}(0, I)
     $$
 
     其中
 
     $$
-    \alpha_t = 1 - \beta_t,
+    \alpha _t = 1 - \beta _t,
     \quad
-    \bar{\alpha}_t = \prod_{i=0}^{t}\alpha_i
+    \bar{\alpha} _t = \prod _{i=0}^{t}\alpha _i
     $$
 
-    $ \beta_t $ 为在每一步加噪时所使用的噪声权重计划。$ \beta_t $ 调度计划可以使用线性调度或动态调度。
+    $ \beta _t $ 为在每一步加噪时所使用的噪声权重计划。$ \beta _t $ 调度计划可以使用线性调度或动态调度。
 
 2. **逆向过程：**
-    希望学习一个去噪网络（或去噪分布）能够以 “去掉” 前向过程添加的噪声方式，反向得到对 $x_0$ 的推断，从而实现生成或预测。在最朴素的扩散模型（如DDPM）中，逆向过程可以通过数值迭代逼近
+    希望学习一个去噪网络（或去噪分布）能够以 “去掉” 前向过程添加的噪声方式，反向得到对 $x _0$ 的推断，从而实现生成或预测。在最朴素的扩散模型（如DDPM）中，逆向过程可以通过数值迭代逼近
 
-    $$p(x_{t-1} \mid x_t)$$
+    $$p(x _{t-1} \mid x _t)$$
 
     在本程序中，通过**DDIM**（Denoising Diffusion Implicit Models）来进行更高效的逆向采样，减少采样步数并可控地注入噪声。
 
@@ -197,7 +197,7 @@ model = train_model(config,data)
 在扩散模型中，一个关键问题是如何在有限步数的采样中保证累计误差可控。利用连续时间极限分析，令时间步间隔 $\Delta t$ 足够小时，根据扩散微分方程：
 
 $$
-dx = f(x,t) \, dt + g(t) \, dW_t,
+dx = f(x,t) \, dt + g(t) \, dW _t,
 $$
 
 通过 Lipschitz 条件可以证明误差在每步更新中被控制，从而整体模型收敛。 Grönwall 不等式给出累积误差满足：
@@ -210,23 +210,23 @@ $$
 
 ### 2. 动态余弦调度及其推导
 
-在原始DDPM（Denoising Diffusion Probabilistic Models）框架中，$ \beta_t $ 通常可以是线性或指数递增。然而在实践中，使用**余弦调度**（cosine schedule）往往能获得更稳定的训练与更好的生成质量。其核心思路是：用余弦函数从 1 到 0 的变化映射来控制 $\bar{\alpha}_t$ 的变化速度。
+在原始DDPM（Denoising Diffusion Probabilistic Models）框架中，$ \beta _t $ 通常可以是线性或指数递增。然而在实践中，使用**余弦调度**（cosine schedule）往往能获得更稳定的训练与更好的生成质量。其核心思路是：用余弦函数从 1 到 0 的变化映射来控制 $\bar{\alpha} _t$ 的变化速度。
 
 1. **标准余弦调度：**
     令
 
-    $$\bar{\alpha}_t = \cos^2\Bigl(\tfrac{\pi}{2}\cdot u_t\Bigr)$$
+    $$\bar{\alpha} _t = \cos^2\Bigl(\tfrac{\pi}{2}\cdot u _t\Bigr)$$
 
-    其中 $u_t$ 通常随 $t/T$ 做线性变化，并且会结合一个平滑参数 $s$。
+    其中 $u _t$ 通常随 $t/T$ 做线性变化，并且会结合一个平滑参数 $s$。
 
     $$
-    u_t = \frac{\frac{t}{T} + s}{1 + s}
+    u _t = \frac{\frac{t}{T} + s}{1 + s}
     $$
 
     通过泰勒展开可证明，将 $ 𝑡/𝑇 $ 作为自变量时，余弦函数具有良好的平滑性。当 $ 𝑡→0$ $t→T$ 时：
 
     $$
-    \bar{\alpha}_t \approx \cos^2\!\left[\frac{\pi}{2}\frac{s}{1+s}\right] \quad \text{或} \quad \bar{\alpha}_t \approx \cos^2\!\left[\frac{\pi}{2}\frac{1+s}{1+s}\right]
+    \bar{\alpha} _t \approx \cos^2\!\left[\frac{\pi}{2}\frac{s}{1+s}\right] \quad \text{或} \quad \bar{\alpha} _t \approx \cos^2\!\left[\frac{\pi}{2}\frac{1+s}{1+s}\right]
     $$
 
     从而有助于确保梯度在各步之间能够平稳传递。这为后续的反向传播提供理论保证。
@@ -234,15 +234,15 @@ $$
     所以：
 
     $$
-    \bar{\alpha}_t
+    \bar{\alpha} _t
     = \cos^2\Bigl(\frac{\pi}{2} \cdot \frac{\frac{t}{T}+s}{1+s}\Bigr).
     $$
 
     从而得到：
 
     $$
-    \beta_t
-    = 1 - \frac{\bar{\alpha}_{t+1}}{\bar{\alpha}_t}.
+    \beta _t
+    = 1 - \frac{\bar{\alpha} _{t+1}}{\bar{\alpha} _t}.
     $$
 
 1. **动态余弦调度：**
@@ -250,12 +250,12 @@ $$
     为适应不同数据集的波动特征，可引入序列的标准差来动态地修正 $s$。令
 
     $$
-    s = s_{\text{base}} \times \bigl(1 + \alpha \cdot \text{volatility}\bigr).
+    s = s _{\text{base}} \times \bigl(1 + \alpha \cdot \text{volatility}\bigr).
     $$
 
-    设计确保了当数据波动较大时，调度曲线能够自适应地平移。这不仅保证了前向过程噪声注入的灵活性，同时也在数值上起到平滑梯度的作用。这样当数据波动较大时，$\beta_t$ 的变化曲线也更快或更慢地覆盖初始与中间阶段，从而对大波动序列更加灵活。
+    设计确保了当数据波动较大时，调度曲线能够自适应地平移。这不仅保证了前向过程噪声注入的灵活性，同时也在数值上起到平滑梯度的作用。这样当数据波动较大时，$\beta _t$ 的变化曲线也更快或更慢地覆盖初始与中间阶段，从而对大波动序列更加灵活。
 
-    利用该动态调度后，前向过程的 “噪声注入量” $\beta_t$ 会自适应地进行放缩，有助于在高波动场景下保持更稳定或更适应的收敛性能。
+    利用该动态调度后，前向过程的 “噪声注入量” $\beta _t$ 会自适应地进行放缩，有助于在高波动场景下保持更稳定或更适应的收敛性能。
 
 
 ### 3. 复合泊松过程与自适应跳跃噪声
@@ -267,31 +267,31 @@ $$
     - 令泊松强度（下文记为 $\lambda$）控制单位时间对跳跃次数的期望。对每个样本在一步加噪时：
 
     $$
-    n_{\mathrm{jumps}} \sim \mathrm{Poisson}(\lambda).
+    n _{\mathrm{jumps}} \sim \mathrm{Poisson}(\lambda).
     $$
 
-    - 如若 $n_{\mathrm{jumps}} > 0$，我们将其视为一次“聚合跳跃”，拥有
+    - 如若 $n _{\mathrm{jumps}} > 0$，我们将其视为一次“聚合跳跃”，拥有
 
     $$
-    \sqrt{n_{\mathrm{jumps}}}\cdot \mathrm{jump\_scale} \cdot \epsilon_{\mathrm{jump}},
+    \sqrt{n _{\mathrm{jumps}}}\cdot \mathrm{jump\ _scale} \cdot \epsilon _{\mathrm{jump}},
     \quad
-    \epsilon_{\mathrm{jump}}\sim \mathcal{N}(0,I).
+    \epsilon _{\mathrm{jump}}\sim \mathcal{N}(0,I).
     $$
 
     这样在同一时间步内若出现多次跳跃，等价于一次方差加大了的合并跳跃。
 
 2. **自适应跳跃模块：**
 
-    - 当不使用复合泊松，而是让神经网络自适应地学习“跳跃发生概率” $\mathrm{jump\_prob}$ 以及“跳跃幅度” $\mathrm{jump\_scale}$；
+    - 当不使用复合泊松，而是让神经网络自适应地学习“跳跃发生概率” $\mathrm{jump\ _prob}$ 以及“跳跃幅度” $\mathrm{jump\ _scale}$；
 
     - 在实践中可通过一层或多层全连接网络对条件编码器的输出 $h$ 做映射：
 
     $$
-    [p,\,s] = f_\theta(h).
+    [p,\,s] = f _\theta(h).
     $$
 
-    - $p = \sigma(\mathrm{logits\_p}) \in [0,1]$：跳跃发生概率；
-    - $s = \mathrm{Softplus}(\mathrm{logits\_s}) > 0$：跳跃幅度。
+    - $p = \sigma(\mathrm{logits\ _p}) \in [0,1]$：跳跃发生概率；
+    - $s = \mathrm{Softplus}(\mathrm{logits\ _s}) > 0$：跳跃幅度。
     - 每个样本每步加噪时，通过一次伯努利采样来决定是否加上该跳跃噪声。
 
     上述跳跃机制仅在序列某一通道（例如第 0 通道）上叠加保证使整体噪声分布在大部分情况下保持相对平稳，而在关键时刻出现较大增量，更符合某些金融时序的波动特征。
@@ -302,37 +302,37 @@ $$
 
 DDIM（Denoising Diffusion Implicit Models）提出了一种更高效的采样方案，其核心是引入一个参数 $\eta$ 控制噪声注入量，既可使采样变为**确定性（ $\eta=0$ )**，也可保留一定随机性（$\eta>0$)。
 
-在逆向过程中，我们希望利用去噪网络预测 $x_0$（记作 $x_0^{\mathrm{pred}}$），然后构造近似逆向采样公式.
+在逆向过程中，我们希望利用去噪网络预测 $x _0$（记作 $x _0^{\mathrm{pred}}$），然后构造近似逆向采样公式.
 
-- $x_t$ 为扩散后的数据；
-- 令 $\bar{\alpha}_t = \prod_{i=0}^{t}\alpha_i$；
-- 去噪网络预测的 $x_0^{\mathrm{pred}}$ 和噪声 $\epsilon_{\mathrm{pred}}$。其中
+- $x _t$ 为扩散后的数据；
+- 令 $\bar{\alpha} _t = \prod _{i=0}^{t}\alpha _i$；
+- 去噪网络预测的 $x _0^{\mathrm{pred}}$ 和噪声 $\epsilon _{\mathrm{pred}}$。其中
 
    $$
-   \epsilon_{\mathrm{pred}} = \frac{x_t - \sqrt{\bar{\alpha}_t}\, x_0^{\mathrm{pred}}}{\sqrt{1-\bar{\alpha}_t}}.
+   \epsilon _{\mathrm{pred}} = \frac{x _t - \sqrt{\bar{\alpha} _t}\, x _0^{\mathrm{pred}}}{\sqrt{1-\bar{\alpha} _t}}.
    $$
 
-在理想情况下，若 $x_0^{\mathrm{pred}}$ 完美重构 $x_0$ ，那么 $\epsilon_{\mathrm{pred}}$ 则与真实噪声 𝜖 一致。DDIM 采样过程进一步沿用这种思路，通过以下更新公式从 $𝑥_𝑡$ 反向重构出 $x_0$
+在理想情况下，若 $x _0^{\mathrm{pred}}$ 完美重构 $x _0$ ，那么 $\epsilon _{\mathrm{pred}}$ 则与真实噪声 𝜖 一致。DDIM 采样过程进一步沿用这种思路，通过以下更新公式从 $𝑥 _𝑡$ 反向重构出 $x _0$
 ：
 
 $$
-x_{t-1}= \sqrt{\bar{\alpha}_{t-1}} \; x_0^{\mathrm{pred}}+ \sqrt{1 - \bar{\alpha}_{t-1} - \sigma_t^2}\;\epsilon_{\mathrm{pred}}+ \sigma_t \, \epsilon,\quad \epsilon \sim \mathcal{N}(0, I)
+x _{t-1}= \sqrt{\bar{\alpha} _{t-1}} \; x _0^{\mathrm{pred}}+ \sqrt{1 - \bar{\alpha} _{t-1} - \sigma _t^2}\;\epsilon _{\mathrm{pred}}+ \sigma _t \, \epsilon,\quad \epsilon \sim \mathcal{N}(0, I)
 $$
 
 其中
 
 $$
-\sigma_t = \eta \sqrt{
-\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}
+\sigma _t = \eta \sqrt{
+\frac{1-\bar{\alpha} _{t-1}}{1-\bar{\alpha} _t}
 \left(
-1- \frac{\bar{\alpha}_t}{\bar{\alpha}_{t-1}}
+1- \frac{\bar{\alpha} _t}{\bar{\alpha} _{t-1}}
 \right)
 }
 $$
 
-可以证明更新公式会将 $x_t$ 中的噪声“逆转”，从而收敛到数据分布。利用链式法则以及连续时间极限下的欧拉法近似推导，可以进一步证明当采样步数足够多时，整体误差满足 Lipschitz 连续性，从而保证模型稳定输出。
+可以证明更新公式会将 $x _t$ 中的噪声“逆转”，从而收敛到数据分布。利用链式法则以及连续时间极限下的欧拉法近似推导，可以进一步证明当采样步数足够多时，整体误差满足 Lipschitz 连续性，从而保证模型稳定输出。
 
-- 当 $\eta=0$ 时，$\sigma_t=0$，则每一步都是确定性的映射，实现**快速推断**，唯一依赖于 $x_0^{\mathrm{pred}}$ 和 $\epsilon_{\mathrm{pred}}$。
+- 当 $\eta=0$ 时，$\sigma _t=0$，则每一步都是确定性的映射，实现**快速推断**，唯一依赖于 $x _0^{\mathrm{pred}}$ 和 $\epsilon _{\mathrm{pred}}$。
 - 当 $\eta>0$ 时，在逆向过程中仍会在各步注入少量额外噪声，使得采样更具多样性。
 
 
@@ -342,50 +342,50 @@ $$
 
 $$
 \begin{aligned}
-\text{PE}(t, 2i) &= \sin\!\left(t\cdot \omega_i \right), \\
-\text{PE}(t, 2i+1) &= \cos\!\left(t\cdot \omega_i \right),
+\text{PE}(t, 2i) &= \sin\left(t\cdot \omega _i \right), \\
+\text{PE}(t, 2i+1) &= \cos\left(t\cdot \omega _i \right),
 \end{aligned}
 $$
 
 其中
 
 $$
-\omega_i = \frac{1}{10000^{\frac{2i}{d_{\text{embed}}}}}
+\omega _i = \frac{1}{10000^{\frac{2i}{d _{\text{embed}}}}}
 $$
 
-$d_{\text{embed}} $ 表示时间嵌入的维度。
+$d _{\text{embed}} $ 表示时间嵌入的维度。
 
 
 1. **完备性证明：**
 利用欧拉公式 \( e^{i\theta} = \cos\theta + i\sin\theta \)，可以证明正弦和余弦函数构成了一组完备的正交基，能够无失真地表征任意周期信号。任何周期性或准周期性时间信息都可以由这组基函数所线性组合表示。
 
 1. **频率覆盖与分解：**
-通过指数衰减构造的 \(\omega_i\) 保证了低频和高频成分的充分覆盖。低频成分捕捉全局趋势，高频成分捕捉细粒度变化。数学上这类似于傅里叶变换中利用正交基对信号做分解，确保不同频段的信息既不冗余也不丢失。
+通过指数衰减构造的 \(\omega _i\) 保证了低频和高频成分的充分覆盖。低频成分捕捉全局趋势，高频成分捕捉细粒度变化。数学上这类似于傅里叶变换中利用正交基对信号做分解，确保不同频段的信息既不冗余也不丢失。
 
 1. **时间平移不变性：**
 对于任意的平移 \( t \to t+\Delta \)，由于正弦和余弦函数的周期性，其嵌入能通过适当相位调整保持结构上的不变，使得模型对绝对时间变化不敏感而更关注相对时间关系。
 
 ### 6. 损失
 
-为了对**预测值本身**与其**波动风险**（不确定性）进行联合建模，网络输出不再只是预测的目标序列 $x_0^{\mathrm{pred}}$，还包含一个额外的 $\log\sigma$（对角线近似，或与特征维度一致）。那么：
+为了对**预测值本身**与其**波动风险**（不确定性）进行联合建模，网络输出不再只是预测的目标序列 $x _0^{\mathrm{pred}}$，还包含一个额外的 $\log\sigma$（对角线近似，或与特征维度一致）。那么：
 
 1. **平稳异方差思路：**
 
     $$
-    p(x_0 \mid \theta) = \mathcal{N}\bigl(x_0^{\mathrm{pred}},\; \sigma^2 I\bigr),
+    p(x _0 \mid \theta) = \mathcal{N}\bigl(x _0^{\mathrm{pred}},\; \sigma^2 I\bigr),
     $$
 
     则极大似然在负对数似然意义下，相当于最小化
 
     $$
-    \|x_0^{\mathrm{pred}} - x_0\|^2 / (2\sigma^2) + \log \sigma,
+    \|x _0^{\mathrm{pred}} - x _0\|^2 / (2\sigma^2) + \log \sigma,
     $$
 
     这是一种常见的“可学习方差”思路。
 
 2. **稳健（Huber）损失：**
 
-    考虑到金融数据中可能有异常值或跳跃，均方误差可能过于敏感，故将 $\|x_0^{\mathrm{pred}} - x_0\|^2$ 改成 **Huber Loss**（Smooth L1）：
+    考虑到金融数据中可能有异常值或跳跃，均方误差可能过于敏感，故将 $\|x _0^{\mathrm{pred}} - x _0\|^2$ 改成 **Huber Loss**（Smooth L1）：
 
     $$
     \mathrm{Huber}(r) =
@@ -395,26 +395,26 @@ $d_{\text{embed}} $ 表示时间嵌入的维度。
     \end{cases}
     $$
 
-    （在 PyTorch 中 `F.smooth_l1_loss` 已做了内部实现，缺省 $\delta=1$。）
+    （在 PyTorch 中 `F.smooth _l1 _loss` 已做了内部实现，缺省 $\delta=1$。）
 
 
-    模型通过同时预测 $x_0^{\mathrm{pred}}$ 和 $\log σ$ 来进行联合建模，其损失函数定义为
+    模型通过同时预测 $x _0^{\mathrm{pred}}$ 和 $\log σ$ 来进行联合建模，其损失函数定义为
 
     $$
     \mathcal{L} =
-    \frac{1}{2} \Bigl[\exp(-\log\sigma)\,\mathrm{Huber}(x_0^{\mathrm{pred}}, x_0) + \log\sigma\Bigr].
+    \frac{1}{2} \Bigl[\exp(-\log\sigma)\,\mathrm{Huber}(x _0^{\mathrm{pred}}, x _0) + \log\sigma\Bigr].
     $$
 
     假设预测误差服从正态分布：
 
     $$
-    p(x_0 \mid x_0^{\text{pred}}) = \mathcal{N}(x_0^{\text{pred}}, \sigma^2 I),
+    p(x _0 \mid x _0^{\text{pred}}) = \mathcal{N}(x _0^{\text{pred}}, \sigma^2 I),
     $$
 
     则其负对数似然为
 
     $$
-    -\log p \propto \frac{(x_0 - x_0^{\text{pred}})^2}{2\sigma^2} + \log\sigma.
+    -\log p \propto \frac{(x _0 - x _0^{\text{pred}})^2}{2\sigma^2} + \log\sigma.
     $$
 
     用 Huber 损失替换平方误差，并引入系数 \( \exp(-\log\sigma) \) 以动态缩放误差，这使得当异常值出现时模型能够自适应调低噪声影响。当数据误差较大时，“缩放因子” $\exp(-\log\sigma)$ 可以自动调节对异常值的影响，同时保留了在 $\mathrm{Huber}$ 范围内的平滑过渡。
@@ -432,8 +432,8 @@ def get_dynamic_beta_schedule(T, volatility, s_base=0.008, alpha=1.0):
     
     参数:
       T: 扩散步数
-      volatility: 波动率指标（例如 log_return 的标准差）
-      s_base: 基础 s 参数
+      volatility: 波动率指标（例如 log _return 的标准差）
+      s _base: 基础 s 参数
       alpha: 控制波动率对 s 的影响因子
     
     返回:
